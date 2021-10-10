@@ -20,39 +20,62 @@ from options import create_parser, init_optim
 parser = create_parser()
 args = parser.parse_args()
 
-if args.device == 'gpu':
+if args.device == "gpu":
     # train on the GPU or on the CPU, if a GPU is not available
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 else:
-    device = torch.device('cpu')
+    device = torch.device("cpu")
 
 
 # Create multitask datasets
-if args.name == 'permMNIST':
-    args.scenario = 'domain'
-if args.name == 'mnist_fmnist':
-    args.scenario = 'task'
+if args.name == "permMNIST":
+    args.scenario = "domain"
+if args.name == "mnist_fmnist":
+    args.scenario = "task"
     args.tasks = 2
     (train_datasets, test_datasets), config, classes_per_task = load_mnist_fmnist()
 else:
-    (train_datasets, test_datasets), config, classes_per_task = \
-        get_multitask_experiment(name=args.name, scenario=args.scenario, tasks=args.tasks,
-                                 verbose=args.verbose, mnist28=False)
+    (train_datasets, test_datasets), config, classes_per_task = get_multitask_experiment(
+        name=args.name, scenario=args.scenario, tasks=args.tasks, verbose=args.verbose, mnist28=False
+    )
 print("Data loaded")
 
-multihead = True if args.scenario == 'task' else False
+multihead = True if args.scenario == "task" else False
 
 
 # define model
-if args.network == 'CNN':
-    model = CNN(in_size=config['size'], in_channels=config['channels'], c=args.c, fc_size=args.fc_size,
-                classes=classes_per_task, tasks=args.tasks, scenario=args.scenario, multihead=multihead)
-elif args.network == 'DeepCNN':
-    model = DeepCNN(in_size=config['size'], in_channels=config['channels'], c=args.c, fc_size=args.fc_size,
-                    classes=classes_per_task, tasks=args.tasks, scenario=args.scenario, multihead=multihead)
+if args.network == "CNN":
+    model = CNN(
+        in_size=config["size"],
+        in_channels=config["channels"],
+        c=args.c,
+        fc_size=args.fc_size,
+        classes=classes_per_task,
+        tasks=args.tasks,
+        scenario=args.scenario,
+        multihead=multihead,
+    )
+elif args.network == "DeepCNN":
+    model = DeepCNN(
+        in_size=config["size"],
+        in_channels=config["channels"],
+        c=args.c,
+        fc_size=args.fc_size,
+        classes=classes_per_task,
+        tasks=args.tasks,
+        scenario=args.scenario,
+        multihead=multihead,
+    )
 else:
-    model = MLP(in_size=config['size'], in_channels=config['channels'], fc_size=args.fc_size,
-                classes=classes_per_task, tasks=args.tasks, scenario=args.scenario, multihead=multihead)
+    model = MLP(
+        in_size=config["size"],
+        in_channels=config["channels"],
+        fc_size=args.fc_size,
+        classes=classes_per_task,
+        tasks=args.tasks,
+        scenario=args.scenario,
+        multihead=multihead,
+    )
 
 # Define optimizer
 model.to(device)
@@ -63,7 +86,7 @@ count_parameters(model)
 
 
 # Pretraining on CIFAR-10 if we use CIFAR-100 as dataset for CL experiments
-if args.pretrain_cnn and args.name == 'CIFAR100':
+if args.pretrain_cnn and args.name == "CIFAR100":
     model = pretrain_cnn(model, device, bs=args.train_bs, epochs=args.pretrain_cnn_epochs)
     # Reset optimizers
     model.optimizer = init_optim(model, args)
@@ -107,8 +130,8 @@ train_losses, train_losses_base = [], []
 for t in range(args.tasks):
     print("\n----------- TASK {} ------------".format(t + 1))
     # List to store accuracy for current task
-    accs['task_' + str(t + 1)] = []
-    accs_base['task_' + str(t + 1)] = []
+    accs["task_" + str(t + 1)] = []
+    accs_base["task_" + str(t + 1)] = []
 
     for i in range(args.epochs):
         print(f"Epoch {i + 1}\n-------------------------------")
@@ -118,8 +141,9 @@ for t in range(args.tasks):
         train_losses.append(train_loss_ewc)
         # Test EWC model
         print("\n-----EWC model TEST Accuracies-----")
-        accs, avg_acc, avg_test_loss = evaluate(ewc.model, test_dataloaders, accs, avg_acc, avg_test_loss,
-                                                loss_fn, device, task_nr=t, verbose=args.verbose)
+        accs, avg_acc, avg_test_loss = evaluate(
+            ewc.model, test_dataloaders, accs, avg_acc, avg_test_loss, loss_fn, device, task_nr=t, verbose=args.verbose
+        )
 
         # Train base model
         if args.base_model:
@@ -127,8 +151,17 @@ for t in range(args.tasks):
             train_losses_base.append(train_loss_base)
             # Test base model
             print("\n-----Base model TEST Accuracies-----")
-            accs_base, avg_acc_base, avg_test_loss_base = evaluate(base_model, test_dataloaders, accs_base, avg_acc_base,
-                                                                   avg_test_loss_base, loss_fn, device, task_nr=t, verbose=args.verbose)
+            accs_base, avg_acc_base, avg_test_loss_base = evaluate(
+                base_model,
+                test_dataloaders,
+                accs_base,
+                avg_acc_base,
+                avg_test_loss_base,
+                loss_fn,
+                device,
+                task_nr=t,
+                verbose=args.verbose,
+            )
             # Reset optimizer
             base_model.optimizer = init_optim(base_model, args)
 
@@ -137,8 +170,14 @@ for t in range(args.tasks):
         break
 
     # Compute regularization terms - mean and FIM for every layer in network
-    ewc.compute_fim(task_name=args.name, dataset=train_datasets[t], batch_size=64, device=device,
-                    task_nr=t, num_batches=args.fisher_num_batches)
+    ewc.compute_fim(
+        task_name=args.name,
+        dataset=train_datasets[t],
+        batch_size=64,
+        device=device,
+        task_nr=t,
+        num_batches=args.fisher_num_batches,
+    )
 
     # Reset optimizer
     ewc.model.optimizer = init_optim(ewc.model, args)
@@ -149,25 +188,27 @@ print("----------- END OF TRAINING ------------")
 # Visualize results
 # Plot average accuracy and Save plot
 filename = "store/plots/EWC/{}_{}_lam{}_lr{}_bs{}_epochs{}_avg_bn_pretrain{}".format(
-    args.name, model._get_name(), args.lambda_param, args.lr, args.train_bs, args.epochs, args.pretrain_cnn_epochs)
+    args.name, model._get_name(), args.lambda_param, args.lr, args.train_bs, args.epochs, args.pretrain_cnn_epochs
+)
 
-plot_list([avg_acc, avg_acc_base], y_desc='Average accuracy', title='', save=args.save_plots, filename=filename)
+plot_list([avg_acc, avg_acc_base], y_desc="Average accuracy", title="", save=args.save_plots, filename=filename)
 
 # Plot train losses
-plot_list([train_losses, train_losses_base], y_desc='Train loss', save=False)
+plot_list([train_losses, train_losses_base], y_desc="Train loss", save=False)
 
 # Plot test losses
-plot_list([avg_test_loss, avg_test_loss_base], y_desc='Test loss', save=False)
+plot_list([avg_test_loss, avg_test_loss_base], y_desc="Test loss", save=False)
 
 
 # Plot accs for each task and Save plot
 filename = "store/plots/EWC/{}_{}_lam{}_lr{}_bs{}_epochs{}_bn_pretrain{}".format(
-    args.name, model._get_name(), args.lambda_param, args.lr, args.train_bs, args.epochs, args.pretrain_cnn_epochs)
+    args.name, model._get_name(), args.lambda_param, args.lr, args.train_bs, args.epochs, args.pretrain_cnn_epochs
+)
 
-plot_dict(accs, args.epochs, args.tasks, y_desc='Accuracy', title='', save=args.save_plots, filename=filename)
+plot_dict(accs, args.epochs, args.tasks, y_desc="Accuracy", title="", save=args.save_plots, filename=filename)
 
 # Plot accs for each task for BASE MODEL
 if args.base_model:
-    plot_dict(accs_base, args.epochs, args.tasks, y_desc='Base Accuracy', title='', save=False)
+    plot_dict(accs_base, args.epochs, args.tasks, y_desc="Base Accuracy", title="", save=False)
 
 plt.show()

@@ -6,15 +6,17 @@ from models.EncoderDecoder import Encoder, EncoderMLP, EncoderDCNN, Decoder, Dec
 
 
 class VariationalAutoencoder(nn.Module):
-    """ Class for training/testing VAE and sampling from latent space """
+    """Class for training/testing VAE and sampling from latent space"""
 
-    def __init__(self, net_type='MLP', size=28, in_channels=1, latent_dims=10, fc_size=256, beta=1.0, latent_classes=1):
+    def __init__(
+        self, net_type="MLP", size=28, in_channels=1, latent_dims=10, fc_size=256, beta=1.0, latent_classes=1
+    ):
         super(VariationalAutoencoder, self).__init__()
 
-        if net_type == 'MLP':
+        if net_type == "MLP":
             self.encoder = EncoderMLP(size, in_channels, fc_size, latent_dims, latent_classes)
             self.decoder = DecoderMLP(size, in_channels, fc_size, latent_dims, latent_classes)
-        elif net_type == 'DeepCNN':
+        elif net_type == "DeepCNN":
             self.encoder = EncoderDCNN(size, in_channels, latent_dims, fc_size, latent_classes)
             self.decoder = DecoderDCNN(size, in_channels, latent_dims, fc_size, latent_classes)
         else:
@@ -22,16 +24,14 @@ class VariationalAutoencoder(nn.Module):
             self.decoder = Decoder(size, in_channels, 64, latent_dims, latent_classes)
 
         self.latent_classes = latent_classes
-        self.beta = beta    # kl_divergence coefficient
+        self.beta = beta  # kl_divergence coefficient
         self.optimizer = torch.optim.Adam(params=self.parameters())
-
 
     def forward(self, x, class_nr=0):
         latent_mu, latent_logvar = self.encoder(x, class_nr)
         latent = self.latent_sample(latent_mu, latent_logvar)
         x_recon = self.decoder(latent, class_nr)
         return x_recon, latent_mu, latent_logvar
-
 
     def latent_sample(self, mu, logvar):
         if self.training:
@@ -42,7 +42,6 @@ class VariationalAutoencoder(nn.Module):
         else:
             return mu
 
-
     def vae_loss(self, recon_x, x, mu, logvar):
         # recon_x is the probability of a multivariate Bernoulli distribution p.
         # -log(p(x)) is then the pixel-wise binary cross-entropy.
@@ -52,8 +51,9 @@ class VariationalAutoencoder(nn.Module):
         # Not averaging is the direct implementation of the negative log likelihood,
         # but averaging makes the weight of the other loss term independent of the image resolution.
 
-        recon_loss = F.binary_cross_entropy(recon_x.view(-1, self.decoder.output_size),
-                                            x.view(-1, self.encoder.input_size), reduction='sum')
+        recon_loss = F.binary_cross_entropy(
+            recon_x.view(-1, self.decoder.output_size), x.view(-1, self.encoder.input_size), reduction="sum"
+        )
 
         # recon_loss = nn.BCELoss(reduction='sum')(recon_x, x) / x.size(0)
 
@@ -63,7 +63,6 @@ class VariationalAutoencoder(nn.Module):
         kldivergence = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
         return recon_loss + (self.beta * kldivergence)
-
 
     def train_batch(self, image_batch, device, class_nr=0):
         image_batch = image_batch.to(device)
@@ -78,10 +77,9 @@ class VariationalAutoencoder(nn.Module):
         self.optimizer.step()
         return loss
 
-
     def train_epoch(self, dataloader, device, class_nr=0):
         self.train()
-        num_batches, train_loss = 0, 0.
+        num_batches, train_loss = 0, 0.0
 
         for image_batch, _ in dataloader:
             loss = self.train_batch(image_batch, device, class_nr)
@@ -90,11 +88,10 @@ class VariationalAutoencoder(nn.Module):
 
         return train_loss / num_batches
 
-
     def test_epoch(self, dataloader, device, class_nr=0):
         self.eval()
         num_batches = 0
-        test_loss = 0
+        test_loss = 0.0
 
         for image_batch, _ in dataloader:
             with torch.no_grad():
@@ -108,7 +105,6 @@ class VariationalAutoencoder(nn.Module):
 
         test_loss /= num_batches
         return test_loss
-
 
     def sample(self, no_of_samples, device, class_nr=0):
         self.eval()

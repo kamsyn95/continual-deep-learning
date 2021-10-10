@@ -23,35 +23,47 @@ args = init_gen_args(args)
 gen_separate_train = True if args.epochs != args.gen_epochs else False
 
 # Set device to train and test a network
-if args.device == 'gpu':
+if args.device == "gpu":
     # train on the GPU or on the CPU, if a GPU is not available
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 else:
-    device = torch.device('cpu')
+    device = torch.device("cpu")
 
 
 # Create multitask datasets
-if args.name == 'permMNIST':
-    args.scenario = 'domain'
-if args.name == 'mnist_fmnist':
-    args.scenario = 'task'
+if args.name == "permMNIST":
+    args.scenario = "domain"
+if args.name == "mnist_fmnist":
+    args.scenario = "task"
     args.tasks = 2
     (train_datasets, test_datasets), config, classes_per_task = load_mnist_fmnist()
 else:
-    (train_datasets, test_datasets), config, classes_per_task = \
-        get_multitask_experiment(name=args.name, scenario=args.scenario, tasks=args.tasks,
-                                 verbose=args.verbose, mnist28=False)
+    (train_datasets, test_datasets), config, classes_per_task = get_multitask_experiment(
+        name=args.name, scenario=args.scenario, tasks=args.tasks, verbose=args.verbose, mnist28=False
+    )
 print("Data loaded")
 
-multihead = True if args.scenario == 'task' else False
+multihead = True if args.scenario == "task" else False
 
 
 # args.tasks = 5
 
 # define model
-GR = GenerativeReplay(net_type=args.network, in_size=config['size'], in_channels=config['channels'], batch_size=args.train_bs,
-                      latent_dims=args.latent_dims, c=args.c, fc_size=args.fc_size, lr_gan=args.gen_lr, betas_gan=args.gen_betas,
-                      classes=classes_per_task, tasks=args.tasks, scenario=args.scenario, multihead=multihead)
+GR = GenerativeReplay(
+    net_type=args.network,
+    in_size=config["size"],
+    in_channels=config["channels"],
+    batch_size=args.train_bs,
+    latent_dims=args.latent_dims,
+    c=args.c,
+    fc_size=args.fc_size,
+    lr_gan=args.gen_lr,
+    betas_gan=args.gen_betas,
+    classes=classes_per_task,
+    tasks=args.tasks,
+    scenario=args.scenario,
+    multihead=multihead,
+)
 
 # Set optimizers
 GR.to(device)
@@ -59,16 +71,16 @@ GR.model.optimizer = init_optim(GR.model, args)
 GR.gan.optimizerD = init_optim(GR.gan.netD, args, generator=True)
 GR.gan.optimizerG = init_optim(GR.gan.netG, args, generator=True)
 
-print(('-' * 16) + ' Main model layers ' + ('-' * 16))
+print(("-" * 16) + " Main model layers " + ("-" * 16))
 count_parameters(GR.model)
-print(('-' * 16) + ' Generator layers ' + ('-' * 16))
+print(("-" * 16) + " Generator layers " + ("-" * 16))
 count_parameters(GR.gan.netG)
-print(('-' * 16) + ' Discriminator layers ' + ('-' * 16))
+print(("-" * 16) + " Discriminator layers " + ("-" * 16))
 count_parameters(GR.gan.netD)
 
 
 # Pretraining on CIFAR-10 if we use CIFAR-100 as dataset for CL experiments
-if args.name == 'CIFAR100':
+if args.name == "CIFAR100":
     # Pretraining CNN
     if args.pretrain_cnn:
         GR.model = pretrain_cnn(GR.model, device, bs=args.train_bs, epochs=args.pretrain_cnn_epochs)
@@ -116,9 +128,8 @@ for t in range(args.tasks):
     DL_concated = CatDataloaders(dls_list)
 
     # List to store accuracy for current task
-    accs['task_' + str(t + 1)] = []
-    accs_base['task_' + str(t + 1)] = []
-
+    accs["task_" + str(t + 1)] = []
+    accs_base["task_" + str(t + 1)] = []
 
     # Training loop for both model and generator or only for model
     for i in range(args.epochs):
@@ -128,13 +139,16 @@ for t in range(args.tasks):
         if gen_separate_train:
             train_loss_GR_model = GR.train_epoch_model(DL_concated, loss_fn, device, task_nr=t, verbose=args.verbose)
         else:
-            train_loss_GR_model = GR.train_epoch(DL_concated, loss_fn, device, task_nr=t, epoch=i, verbose=args.verbose, save=args.save_imgs)
+            train_loss_GR_model = GR.train_epoch(
+                DL_concated, loss_fn, device, task_nr=t, epoch=i, verbose=args.verbose, save=args.save_imgs
+            )
         train_losses.append(train_loss_GR_model)
 
         # Evaluating tasks seen so far
         print("\n-----GR model TEST Accuracies-----")
-        accs, avg_acc, avg_test_loss = evaluate(GR.model, test_dataloaders, accs, avg_acc, avg_test_loss,
-                                                loss_fn, device, task_nr=t, verbose=args.verbose)
+        accs, avg_acc, avg_test_loss = evaluate(
+            GR.model, test_dataloaders, accs, avg_acc, avg_test_loss, loss_fn, device, task_nr=t, verbose=args.verbose
+        )
 
         # Train base model
         if args.base_model:
@@ -142,11 +156,19 @@ for t in range(args.tasks):
             train_losses_base.append(train_loss_base)
             # Test base model
             print("\n-----BASE model TEST Accuracies-----")
-            accs_base, avg_acc_base, avg_test_loss_base = evaluate(base_model, test_dataloaders, accs_base, avg_acc_base,
-                                                                   avg_test_loss_base, loss_fn, device, task_nr=t, verbose=args.verbose)
+            accs_base, avg_acc_base, avg_test_loss_base = evaluate(
+                base_model,
+                test_dataloaders,
+                accs_base,
+                avg_acc_base,
+                avg_test_loss_base,
+                loss_fn,
+                device,
+                task_nr=t,
+                verbose=args.verbose,
+            )
             # Reset optimizer
             base_model.optimizer = init_optim(base_model, args)
-
 
     # If we reach last task break the loop and don't train generator
     if t == args.tasks - 1:
@@ -155,7 +177,9 @@ for t in range(args.tasks):
     # Separate train of generator if number of generator's train epochs differ from model's train epochs
     if gen_separate_train:
         for i in range(args.gen_epochs):
-            GR.train_epoch_generator(DL_concated, device, task_nr=t, epoch=i, verbose=args.verbose, save=args.save_imgs)
+            GR.train_epoch_generator(
+                DL_concated, device, task_nr=t, epoch=i, verbose=args.verbose, save=args.save_imgs
+            )
 
     # New list of dataloaders to train on the next task
     dls_list = []
@@ -186,27 +210,43 @@ print("----------- END OF TRAINING ------------")
 # Visualize results
 # Plot average accuracy and Save plot
 filename = "store/plots/GR/GAN_{}_{}_{}_ld{}_lr{}_fc{}_tbs{}_epochs{}_{}_average".format(
-    args.name, args.scenario, GR.model._get_name(), args.latent_dims, args.lr, args.fc_size,
-    args.train_bs, args.epochs, args.gen_epochs)
+    args.name,
+    args.scenario,
+    GR.model._get_name(),
+    args.latent_dims,
+    args.lr,
+    args.fc_size,
+    args.train_bs,
+    args.epochs,
+    args.gen_epochs,
+)
 
-plot_list([avg_acc, avg_acc_base], y_desc='Average accuracy', title='', save=args.save_plots, filename=filename)
+plot_list([avg_acc, avg_acc_base], y_desc="Average accuracy", title="", save=args.save_plots, filename=filename)
 
 # Plot train losses
-plot_list([train_losses, train_losses_base], y_desc='Train loss', save=False)
+plot_list([train_losses, train_losses_base], y_desc="Train loss", save=False)
 
 # Plot test losses
-plot_list([avg_test_loss, avg_test_loss_base], y_desc='Test loss', save=False)
+plot_list([avg_test_loss, avg_test_loss_base], y_desc="Test loss", save=False)
 
 
 # Plot accs for each task and Save plot
 filename = "store/plots/GR/GAN_{}_{}_{}_ld{}_lr{}_fc{}_tbs{}_epochs{}_{}".format(
-    args.name, args.scenario, GR.model._get_name(), args.latent_dims, args.lr, args.fc_size,
-    args.train_bs, args.epochs, args.gen_epochs)
+    args.name,
+    args.scenario,
+    GR.model._get_name(),
+    args.latent_dims,
+    args.lr,
+    args.fc_size,
+    args.train_bs,
+    args.epochs,
+    args.gen_epochs,
+)
 
-plot_dict(accs, args.epochs, args.tasks, y_desc='Accuracy', title='', save=args.save_plots, filename=filename)
+plot_dict(accs, args.epochs, args.tasks, y_desc="Accuracy", title="", save=args.save_plots, filename=filename)
 
 # Plot accs for each task for BASE MODEL
 if args.base_model:
-    plot_dict(accs_base, args.epochs, args.tasks, y_desc='Base Accuracy', title='', save=False)
+    plot_dict(accs_base, args.epochs, args.tasks, y_desc="Base Accuracy", title="", save=False)
 
 plt.show()

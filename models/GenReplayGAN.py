@@ -16,31 +16,39 @@ from models.base_nets import MLP, CNN, DeepCNN
 class GenerativeReplay(nn.Module):
     """Class to perform generative replay of old data samples using GAN"""
 
-    def __init__(self, net_type='MLP', lr_gan=0.0002, betas_gan=(0.5, 0.999), latent_dims=100,
-                 c=16, fc_size=400, batch_size=64, **kwargs):
+    def __init__(
+        self,
+        net_type="MLP",
+        lr_gan=0.0002,
+        betas_gan=(0.5, 0.999),
+        latent_dims=100,
+        c=16,
+        fc_size=400,
+        batch_size=64,
+        **kwargs,
+    ):
 
         super().__init__()
 
-        if net_type == 'CNN':
+        if net_type == "CNN":
             self.model = CNN(**kwargs)
-        elif net_type == 'DeepCNN':
+        elif net_type == "DeepCNN":
             self.model = DeepCNN(c=c, fc_size=fc_size, **kwargs)
         else:
             self.model = MLP(**kwargs)
 
-        self.gan = GAN(nc=kwargs['in_channels'], nz=latent_dims, ndf=batch_size, ngf=batch_size,
-                       lr=lr_gan, betas=betas_gan)
+        self.gan = GAN(
+            nc=kwargs["in_channels"], nz=latent_dims, ndf=batch_size, ngf=batch_size, lr=lr_gan, betas=betas_gan
+        )
 
-        self.save_dir = 'store/imgs/GAN/'
-
+        self.save_dir = "store/imgs/GAN/"
 
     def forward(self, x):
         self.model(x)
         return x
 
-
     def generate_dataset(self, size, device, task_nr, batch_size=64):
-        """ Generate dataset - sampling from generator and labelling by model """
+        """Generate dataset - sampling from generator and labelling by model"""
 
         self.model.task_nr = task_nr
         active_classes = self.model.classes_per_task * (task_nr + 1)
@@ -52,7 +60,7 @@ class GenerativeReplay(nn.Module):
 
             # Create labels
             logits = self.model.forward(img_recon)
-            if self.model.scenario == 'class':
+            if self.model.scenario == "class":
                 logits = logits[:, :active_classes]
             y_recon = logits.argmax(1)
 
@@ -69,13 +77,12 @@ class GenerativeReplay(nn.Module):
         dataset_loader = DataLoader(dataset, batch_size=batch_size)
         return dataset_loader
 
-
     def train_epoch(self, MultipleDLs, loss_fn, device, task_nr, epoch, verbose=True, save=True):
         self.model.train()
         self.gan.train()
 
         for batch_nr, batch in enumerate(MultipleDLs):
-            loss_value = 0.
+            loss_value = 0.0
             losses = []
 
             for i, dl in enumerate(batch):
@@ -93,9 +100,9 @@ class GenerativeReplay(nn.Module):
 
             # Update parameters using combined loss
             self.model.optimizer.zero_grad()
-            total_loss = (1 / (task_nr+1)) * losses.pop(-1)   # current loss
+            total_loss = (1 / (task_nr + 1)) * losses.pop(-1)  # current loss
             for prev_loss in losses:
-                total_loss += (1 - (1 / (task_nr+1))) * prev_loss   # previous losses
+                total_loss += (1 - (1 / (task_nr + 1))) * prev_loss  # previous losses
             total_loss.backward(retain_graph=False)
             self.model.optimizer.step()
 
@@ -105,22 +112,26 @@ class GenerativeReplay(nn.Module):
                 print(f"loss: {loss_value:>7f}  [{current:>5d}/{size:>5d}]")
 
         if verbose:
-            print('Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f'
-                  % (errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+            print(
+                "Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f"
+                % (errD.item(), errG.item(), D_x, D_G_z1, D_G_z2)
+            )
 
         if save:
             fixed_noise = torch.randn(64, self.gan.nz, 1, 1, device=device)
             fake = self.gan.netG(fixed_noise)
-            vutils.save_image(fake.detach(), self.save_dir + 'GAN_fake_samples_task_%02d_epoch_%03d.png'
-                              % (task_nr, epoch), normalize=True)
+            vutils.save_image(
+                fake.detach(),
+                self.save_dir + "GAN_fake_samples_task_%02d_epoch_%03d.png" % (task_nr, epoch),
+                normalize=True,
+            )
 
         return loss_value
-
 
     def train_epoch_model(self, MultipleDLs, loss_fn, device, task_nr, verbose=True):
         self.model.train()
         for batch_nr, batch in enumerate(MultipleDLs):
-            loss_value = 0.
+            loss_value = 0.0
             losses = []
 
             for i, dl in enumerate(batch):
@@ -135,9 +146,9 @@ class GenerativeReplay(nn.Module):
 
             # Update parameters using combined loss
             self.model.optimizer.zero_grad()
-            total_loss = (1 / (task_nr+1)) * losses.pop(-1)   # current loss
+            total_loss = (1 / (task_nr + 1)) * losses.pop(-1)  # current loss
             for prev_loss in losses:
-                total_loss += (1 - (1 / (task_nr+1))) * prev_loss   # previous losses
+                total_loss += (1 - (1 / (task_nr + 1))) * prev_loss  # previous losses
             total_loss.backward(retain_graph=False)
             self.model.optimizer.step()
 
@@ -147,23 +158,27 @@ class GenerativeReplay(nn.Module):
                 print(f"loss: {loss_value:>7f}  [{current:>5d}/{size:>5d}]")
 
         return loss_value
-
 
     def train_epoch_generator(self, MultipleDLs, device, task_nr, epoch, verbose=True, save=True):
         self.gan.train()
         for batch_nr, batch in enumerate(MultipleDLs):
             for i, dl in enumerate(batch):
                 # Unpack values
-                X, y = dl[0], dl[1]
+                X, _ = dl[0], dl[1]
                 # Train generator
                 D_x, errD, errG, D_G_z1, D_G_z2 = self.gan.train_batch(data=X, device=device)
 
         if verbose:
-            print('Epoch %d:  Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f'
-                  % (epoch, errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+            print(
+                "Epoch %d:  Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f"
+                % (epoch, errD.item(), errG.item(), D_x, D_G_z1, D_G_z2)
+            )
 
         if save:
             fixed_noise = torch.randn(64, self.gan.nz, 1, 1, device=device)
             fake = self.gan.netG(fixed_noise)
-            vutils.save_image(fake.detach(), self.save_dir + 'GAN_fake_samples_task_%02d_epoch_%03d.png'
-                              % (task_nr, epoch), normalize=True)
+            vutils.save_image(
+                fake.detach(),
+                self.save_dir + "GAN_fake_samples_task_%02d_epoch_%03d.png" % (task_nr, epoch),
+                normalize=True,
+            )

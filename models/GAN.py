@@ -17,24 +17,20 @@ class Generator(nn.Module):
             nn.ConvTranspose2d(nz, ngf * 8, 4, 1, 0, bias=False),
             nn.BatchNorm2d(ngf * 8),
             nn.ReLU(True),
-
             # state size. (ngf*8) x 4 x 4
             nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ngf * 4),
             nn.ReLU(True),
-
             # state size. (ngf*4) x 8 x 8
             nn.ConvTranspose2d(ngf * 4, ngf * 2, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ngf * 2),
             nn.ReLU(True),
-
             # state size. (ngf*2) x 16 x 16
             nn.ConvTranspose2d(ngf * 2, ngf, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ngf),
             nn.ReLU(True),
-
             nn.ConvTranspose2d(ngf, nc, kernel_size=1, stride=1, padding=0, bias=False),
-            nn.Tanh()
+            nn.Tanh(),
         )
 
     def forward(self, input):
@@ -49,25 +45,21 @@ class Discriminator(nn.Module):
             # input is (nc) x 64 x 64
             nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
-
             # state size. (ndf) x 32 x 32
             nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
-
             # state size. (ndf*2) x 16 x 16
             nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ndf * 4),
             nn.LeakyReLU(0.2, inplace=True),
-
             # state size. (ndf*4) x 8 x 8
             nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
-
             # state size. (ndf*8) x 4 x 4
             nn.Conv2d(ndf * 8, 1, 2, 2, 0, bias=False),
-            nn.Sigmoid()
+            nn.Sigmoid(),
         )
 
     def forward(self, input):
@@ -94,22 +86,19 @@ class GAN(nn.Module):
         self.real_label = 1
         self.fake_label = 0
 
-
     def forward(self, input):
         outG = self.netG(input)
         output = self.netD(outG)
         return output
 
-
     def weights_init(self, m):
-        """ custom weights initialization called on netG and netD """
+        """custom weights initialization called on netG and netD"""
         classname = m.__class__.__name__
-        if classname.find('Conv') != -1:
+        if classname.find("Conv") != -1:
             m.weight.data.normal_(0.0, 0.02)
-        elif classname.find('BatchNorm') != -1:
+        elif classname.find("BatchNorm") != -1:
             m.weight.data.normal_(1.0, 0.02)
             m.bias.data.fill_(0)
-
 
     def train_batch(self, data, device):
         ############################
@@ -152,26 +141,26 @@ class GAN(nn.Module):
 
         return D_x, errD, errG, D_G_z1, D_G_z2
 
-
-    def train_epoch(self, dataloader, device, epoch, niter, batch_size=64, outf=''):
+    def train_epoch(self, dataloader, device, epoch, niter, batch_size=64, outf=""):
         fixed_noise = torch.randn(batch_size, self.nz, 1, 1, device=device)
 
         for i, data in enumerate(dataloader, 0):
-            D_x, errD, errG, D_G_z1, D_G_z2 = self.train_batch(self, data, device)
+            D_x, errD, errG, D_G_z1, D_G_z2 = self.train_batch(data, device)
 
             if i % 50 == 0:
-                print('[%d/%d][%d/%d]' % (epoch, niter, i, len(dataloader)))
+                print("[%d/%d][%d/%d]" % (epoch, niter, i, len(dataloader)))
 
-        print('Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f'
-              % (errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+        print(
+            "Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f"
+            % (errD.item(), errG.item(), D_x, D_G_z1, D_G_z2)
+        )
 
-        if outf != '':
+        if outf != "":
             fake = self.netG(fixed_noise)
-            vutils.save_image(fake.detach(), '%s/fake_samples_epoch_%03d.png' % (outf, epoch), normalize=True)
+            vutils.save_image(fake.detach(), "%s/fake_samples_epoch_%03d.png" % (outf, epoch), normalize=True)
             # do checkpointing
-            torch.save(self.netG.state_dict(), '%s/netG_epoch_%d.pth' % (outf, epoch))
-            torch.save(self.netD.state_dict(), '%s/netD_epoch_%d.pth' % (outf, epoch))
-
+            torch.save(self.netG.state_dict(), "%s/netG_epoch_%d.pth" % (outf, epoch))
+            torch.save(self.netD.state_dict(), "%s/netD_epoch_%d.pth" % (outf, epoch))
 
     def sample(self, no_of_samples, device):
         self.eval()

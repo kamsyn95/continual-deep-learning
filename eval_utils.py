@@ -22,17 +22,17 @@ def count_parameters(model):
 
 def evaluate(model, test_dataloaders, accs_dict, avg_acc_list, avg_loss_list, loss_fn, device, task_nr, verbose=True):
     # Evaluating tasks seen so far
-    acc_sum, loss_sum = 0., 0.
+    acc_sum, loss_sum = 0.0, 0.0
 
     for t_s in range(task_nr + 1):
         # Test model
-        if model.scenario == 'class':
+        if model.scenario == "class":
             acc, loss = model.test_epoch(test_dataloaders[t_s], loss_fn, device, task_nr=task_nr, verbose=verbose)
             # acc, loss = model.test_epoch(test_dataloaders[t_s], loss_fn, device, task_nr=t_s, verbose=verbose)
         else:
             acc, loss = model.test_epoch(test_dataloaders[t_s], loss_fn, device, task_nr=t_s, verbose=verbose)
 
-        accs_dict['task_' + str(t_s + 1)].append(acc)
+        accs_dict["task_" + str(t_s + 1)].append(acc)
         acc_sum += acc
         loss_sum += loss
 
@@ -44,7 +44,7 @@ def evaluate(model, test_dataloaders, accs_dict, avg_acc_list, avg_loss_list, lo
     return accs_dict, avg_acc_list, avg_loss_list
 
 
-def plot_list(items_list, y_desc='', title='', save=False, filename=''):
+def plot_list(items_list, y_desc="", title="", save=False, filename=""):
     # Plot elements from list
     plt.figure()
     for item in items_list:
@@ -57,11 +57,11 @@ def plot_list(items_list, y_desc='', title='', save=False, filename=''):
 
     # Save file
     if save:
-        plt.savefig('{}.png'.format(filename), dpi=300)
+        plt.savefig("{}.png".format(filename), dpi=300)
     # plt.show()
 
 
-def plot_list_compare(args, items_list, y_desc='', x_desc='Epoch', title='', save=False, filename=''):
+def plot_list_compare(args, items_list, y_desc="", x_desc="Epoch", title="", save=False, filename=""):
     # Plot elements from list
     plt.figure()
     for item in items_list:
@@ -73,24 +73,24 @@ def plot_list_compare(args, items_list, y_desc='', x_desc='Epoch', title='', sav
 
     names = []
     if args.base_model:
-        names.append('Base')
+        names.append("Base")
     if args.ewc:
-        names.append('EWC')
+        names.append("EWC")
     if args.packnet:
-        names.append('PackNet')
+        names.append("PackNet")
     if args.gen_rep:
-        names.append('GR')
+        names.append("GR")
     if args.joint_train:
-        names.append('Joint')
+        names.append("Joint")
     plt.legend(names)
 
     # Save file
     if save:
-        plt.savefig('{}.png'.format(filename), dpi=300)
+        plt.savefig("{}.png".format(filename), dpi=300)
     # plt.show()
 
 
-def plot_dict(acc_dict, epochs, tasks, y_desc='', title='', save=False, filename=''):
+def plot_dict(acc_dict, epochs, tasks, y_desc="", title="", save=False, filename=""):
     # Plot elements from dictionary
     plt.figure()
     for i, (task_key, acc_list) in enumerate(acc_dict.items()):
@@ -102,5 +102,5 @@ def plot_dict(acc_dict, epochs, tasks, y_desc='', title='', save=False, filename
 
     # Save file
     if save:
-        plt.savefig('{}.png'.format(filename), dpi=300)
+        plt.savefig("{}.png".format(filename), dpi=300)
     # plt.show()

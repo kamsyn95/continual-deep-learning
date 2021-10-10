@@ -43,14 +43,11 @@ class CatDataloaders:
         return tuple(out)
 
 
-def load_mnist_fmnist(root='store/datasets'):
+def load_mnist_fmnist(root="store/datasets"):
     """Function to load MNIST and Fashion MNIST datasets"""
 
     # Images padded to size 32 x 32
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Pad(2)
-    ])
+    transform = transforms.Compose([transforms.ToTensor(), transforms.Pad(2)])
     # Load MNIST
     mnist_train = datasets.MNIST(root=root, train=True, download=True, transform=transform)
     mnist_test = datasets.MNIST(root=root, train=False, download=True, transform=transform)
@@ -61,7 +58,7 @@ def load_mnist_fmnist(root='store/datasets'):
     # return lists of train and test datasets and some additional info
     train_datasets = [mnist_train, f_mnist_train]
     test_datasets = [mnist_test, f_mnist_test]
-    config = {'size': 32, 'channels': 1, 'classes': 10}
+    config = {"size": 32, "channels": 1, "classes": 10}
     classes_per_task = 10
 
     return (train_datasets, test_datasets), config, classes_per_task
