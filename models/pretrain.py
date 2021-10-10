@@ -5,18 +5,17 @@ from torchvision.datasets import CIFAR10
 
 from copy import deepcopy
 
-root = 'store/datasets'
+root = "store/datasets"
 
 
 # Pretraining VAE model on CIFAR-10
 
+
 def pretrain_vae(vae, device, bs=128, epochs=10):
-    """ Function to pretrain given vae on CIFAR-10 """
+    """Function to pretrain given vae on CIFAR-10"""
 
     # Load data
-    img_transform = transforms.Compose([
-        transforms.ToTensor()
-    ])
+    img_transform = transforms.Compose([transforms.ToTensor()])
     # CIFAR-10
     train_dataset = CIFAR10(root=root, download=True, train=True, transform=img_transform)
     test_dataset = CIFAR10(root=root, download=True, train=False, transform=img_transform)
@@ -29,20 +28,19 @@ def pretrain_vae(vae, device, bs=128, epochs=10):
     for i in range(epochs):
         vae.train_epoch(train_dl, device)
         loss_value = vae.test_epoch(test_dl, device)
-        print('Test set reconstruction error: %f' % loss_value)
+        print("Test set reconstruction error: %f" % loss_value)
 
     return vae
 
 
 # Pretraining CNN on CIFAR-10
 
+
 def pretrain_cnn(model, device, bs=128, epochs=10):
-    """ Function to pretrain given model on CIFAR-10 """
+    """Function to pretrain given model on CIFAR-10"""
 
     # Load data
-    img_transform = transforms.Compose([
-        transforms.ToTensor()
-    ])
+    img_transform = transforms.Compose([transforms.ToTensor()])
     # CIFAR-10
     train_dataset = CIFAR10(root=root, download=True, train=True, transform=img_transform)
     test_dataset = CIFAR10(root=root, download=True, train=False, transform=img_transform)

@@ -1,2 +1,8 @@
 store/
+.mypy_cache/
 env/
+.venv/
+.idea/
+__pycache__/
+data/__pycache__/
+models/__pycache__/

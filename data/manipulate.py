@@ -101,7 +101,7 @@ class UnNormalize(object):
 
     def __call__(self, tensor):
         """Denormalize image, either single image (C,H,W) or image batch (N,C,H,W)"""
-        batch = (len(tensor.size()) == 4)
+        batch = len(tensor.size()) == 4
         for t, m, s in zip(tensor.permute(1, 0, 2, 3) if batch else tensor, self.mean, self.std):
             t.mul_(s).add_(m)
             # The normalize code -> t.sub_(m).div_(s)
