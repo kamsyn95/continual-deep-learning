@@ -2,7 +2,4 @@ store/
 venv/
 .venv/
 .idea/
-.mypy_cache/
-__pycache__/
-data/__pycache__/
-models/__pycache__/
+*cache*
