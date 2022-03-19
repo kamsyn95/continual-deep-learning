@@ -7,8 +7,8 @@ from copy import deepcopy
 from models.base_nets import CNN, MLP, DeepCNN
 from models.pretrain import pretrain_cnn, pretrain_vae
 
-from models.EWC_method import EWCMultitask
-from models.GenReplayVAE import GenerativeReplay
+from models.ewc_modules import EWCMultitask
+from models.generative_replay_vae import GenerativeReplay
 from models.prune import Pruner, init_masks
 
 from data.load import get_multitask_experiment

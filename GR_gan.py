@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from copy import deepcopy
 
-from models.GenReplayGAN import GenerativeReplay
+from models.generative_replay_gan import GenerativeReplay
 from models.pretrain import pretrain_cnn
 
 from data.load import get_multitask_experiment

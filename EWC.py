@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 
 from models.base_nets import CNN, MLP, DeepCNN
-from models.EWC_method import EWCMultitask
+from models.ewc_modules import EWCMultitask
 from models.pretrain import pretrain_cnn
 
 from data.load import get_multitask_experiment
