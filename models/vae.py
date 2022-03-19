@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.EncoderDecoder import Encoder, EncoderMLP, EncoderDCNN, Decoder, DecoderMLP, DecoderDCNN
+from models.encoder_decoder import Encoder, EncoderMLP, EncoderDCNN, Decoder, DecoderMLP, DecoderDCNN
 
 
 class VariationalAutoencoder(nn.Module):

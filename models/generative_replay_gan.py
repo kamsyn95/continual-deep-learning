@@ -9,7 +9,7 @@ from data.utils import CustomImageDataset
 import torchvision.utils as vutils
 import numpy as np
 
-from models.GAN import GAN
+from models.gan_modules import GAN
 from models.base_nets import MLP, CNN, DeepCNN
 
 

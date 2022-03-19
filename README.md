@@ -23,7 +23,7 @@ Scripts `EWC.py`, `PackNet.py`, `GR_vae.py` and `GR_gan.py` perform training and
 
 To compare all 3 algorithms, as well as base model without CL capabilities, run:
 ```python
-python compare.py --ewc --packnet --gen_rep --base_model
+python compare_all.py --ewc --packnet --gen_rep --base_model
 ```
 
 Parser of input arguments is defined in file `options.py` 

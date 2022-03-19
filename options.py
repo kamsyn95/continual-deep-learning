@@ -81,7 +81,7 @@ def create_parser(desctription=""):
     # Flag to decide whether train base model without CL to compare
     parser.add_argument("--base_model", action="store_true", default=False, help="train base model to compare")
 
-    # Flags in script compare.py
+    # Flags in script compare_all.py
     parser.add_argument("--ewc", action="store_true", default=False, help="Elastic Weights Consolidation")
     parser.add_argument("--packnet", action="store_true", default=False, help="PackNet algorithm with network pruning")
     parser.add_argument("--gen_rep", action="store_true", default=False, help="Generative Replay")
