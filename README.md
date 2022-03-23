@@ -31,10 +31,14 @@ Parser of input arguments is defined in file `options.py`
 ## Results
 - Split MNIST - 5 binary classification tasks, in each task images of 2 types of digits
 
-![ALL_splitMNIST_MLP_lr0 001_bs128_epochs10_pretrain10_avg](https://user-images.githubusercontent.com/92218640/138709936-cd91809a-7267-46e8-8502-2a6620bf3c0f.png)
+<p align="center">
+<img src="https://user-images.githubusercontent.com/92218640/138709936-cd91809a-7267-46e8-8502-2a6620bf3c0f.png" width="600">
+</p>
 
 ---
 
 - Permuted MNIST - training on sequence of 20 tasks, each task created by random permutation of original images pixels
 
-![ALL_permMNIST_domain_20tasks_MLP_fc2000_lr0 001_bs128_epochs5_avg_task_end](https://user-images.githubusercontent.com/92218640/138709586-d4bdd95e-bb6a-40e0-96b2-d518f807b736.png)
+<p align="center">
+<img src="https://user-images.githubusercontent.com/92218640/138709586-d4bdd95e-bb6a-40e0-96b2-d518f807b736.png" width="600">
+</p>
